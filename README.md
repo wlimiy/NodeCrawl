@@ -58,7 +58,49 @@
     });
     exports.Movie=mongoose.model('Movie',MoviesSchema);
 4. 建立web服务器显示这些数据
+>server.js
+
+    let express=require('express');
+    let Movie=require('./model').Movie;
+    let app=express();
+    app.set('view engine','ejs');
+    app.get('/',function (req,res) {
+        Movie.find({},function (err,movies) {
+            res.render('index',{movies});
+        });
+    });
+    app.listen(8080,function () {
+        console.log('8080')
+    });
 5. 使用计划任务自动执行更新任务
+>async模块：流程控制工具包，提供了直接而强大的异步功能。
+    <br/>warterfall：每个任务都是有联系的
+按顺序依次执行一组函数。每个函数产生的值，都将传给下一个。
+    
+    main.js
+    let read=require('./read');
+    let write=require('./write');
+    let async=require('async');
+    let Movie = require('../model').Movie;
+    let debug = require('debug')('crawl:main');
+    let url = 'http://top.baidu.com/buzz?b=26&c=1';
+    let start=function () {
+        async.waterfall([
+            //清空数据库
+            function (cb) {
+                Movie.remove({},cb);
+            },
+            function (data,cb) {
+                read(url,cb);
+            },
+            function (movies,cb) {
+                write(movies,cb)
+            }
+        ],function (err,result) {
+            debug('全部任务执行完毕')
+        });
+    };
+    start();
 6. 布署项目到阿里云中并配置反向代理
 
-# NodeCrawl
+
